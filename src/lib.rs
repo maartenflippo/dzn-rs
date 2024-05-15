@@ -1,14 +1,10 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+//! A DZN file is represented in the [`DataFile`] struct. It can be parsed from a source with the
+//! [`parse`] function.
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+mod ast;
+mod error;
+mod parser;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub use ast::*;
+pub use error::*;
+pub use parser::*;

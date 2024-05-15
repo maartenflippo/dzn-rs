@@ -6,3 +6,6 @@ edition = "2021"
 authors = ["Maarten Flippo"]
 readme = "README.md"
 license = "MIT"
+
+[dependencies]
+thiserror = "1.0.60"
