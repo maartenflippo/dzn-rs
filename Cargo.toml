@@ -8,4 +8,5 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
+proptest = "1.4.0"
 thiserror = "1.0.60"
