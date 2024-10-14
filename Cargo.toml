@@ -10,3 +10,4 @@ license = "MIT"
 [dependencies]
 proptest = "1.4.0"
 thiserror = "1.0.60"
+winnow = "0.6.20"

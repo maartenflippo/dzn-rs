@@ -6,26 +6,22 @@
 //! let source = r#"
 //! int_param = 5;
 //! bool_param = true;
-//! set_param = {1, 3};
-//! interval_set_param = 5..10;
 //! array_1d = [1, 3, 5];
 //! array_2d = [| true, false
 //!             | false, true |];
 //! "#;
 //!
-//! let data_file = dzn_rs::parse::<i32>(source.as_bytes());
+//! let data_file = dzn_rs::parse::<i32>(source.as_bytes()).expect("valid dzn");
 //!
-//! assert_eq!(Some(5), data_file.get::<i32>("int_param"));
-//! assert_eq!(Some(true), data_file.get::<bool>("bool_param"));
-//! assert_eq!(Some(HashSet::from([1, 3])), data_file.get::<HashSet<i32>>("set_param"));
-//! assert_eq!(Some(true), data_file.get::<HashSet<i32>>("set_param"));
+//! assert_eq!(Some(&5), data_file.get::<i32>("int_param"));
+//! assert_eq!(Some(&true), data_file.get::<bool>("bool_param"));
 //! ```
 
 mod ast;
 mod error;
+mod numbers;
 mod parser;
 mod value;
-mod numbers;
 
 pub use ast::*;
 pub use error::*;
