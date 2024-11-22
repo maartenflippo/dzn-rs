@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, marker::PhantomData};
 
 use crate::{
     numbers::Integer,
-    value::{GetValue, Value},
+    value::{GetValue, ShapedArray, Value, ValueArray},
 };
 
 /// The top-level structure which represents a data file.
@@ -11,8 +11,6 @@ use crate::{
 /// of:
 /// - `int`
 /// - `bool`
-/// - `float`
-/// - `set of` one of the above
 /// - `array of` one of the above
 ///
 /// Conceptually, the integers in the MiniZinc specification are unbounded, which means the scalar
@@ -22,6 +20,8 @@ use crate::{
 #[derive(Clone, Debug, Default)]
 pub struct DataFile<Int> {
     pub(crate) values: HashMap<String, Value<Int>>,
+    pub(crate) arrays_1d: HashMap<String, ValueArray<Int, 1>>,
+    pub(crate) arrays_2d: HashMap<String, ValueArray<Int, 2>>,
 }
 
 impl<Int: Integer> DataFile<Int> {
@@ -36,6 +36,35 @@ impl<Int: Integer> DataFile<Int> {
     {
         self.values.get(key).and_then(|value| value.try_get())
     }
+
+    /// Get a 1-dimensional array from the data file with the given `key` and `length`.
+    pub fn array_1d<T>(&self, key: &str, length: usize) -> Option<&ShapedArray<T, 1>>
+    where
+        ValueArray<Int, 1>: GetValue<ShapedArray<T, 1>>,
+    {
+        self.arrays_1d
+            .get(key)
+            .and_then(|array| array.try_get())
+            .filter(move |&array| array.shape == [length])
+    }
+
+    /// Get a 2-dimensional array from the data file with the given `key`.
+    ///
+    /// The array shape should match `shape`.
+    pub fn array_2d<T>(&self, key: &str, shape: [usize; 2]) -> Option<&ShapedArray<T, 2>>
+    where
+        ValueArray<Int, 2>: GetValue<ShapedArray<T, 2>>,
+    {
+        self.arrays_2d
+            .get(key)
+            .and_then(|array| array.try_get())
+            .filter(move |&array| array.shape == shape)
+    }
+}
+
+pub struct Array<'a, T> {
+    a: PhantomData<&'a ()>,
+    b: PhantomData<T>,
 }
 
 #[cfg(test)]
@@ -57,6 +86,7 @@ mod tests {
         fn integers_are_found(values in int_map()) {
             let data_file = DataFile {
                 values: values.iter().map(|(k, v)| (k.clone(), Value::Int(*v))).collect(),
+                ..Default::default()
             };
 
             for (key, value) in values.iter() {
@@ -68,7 +98,7 @@ mod tests {
     proptest! {
         #[test]
         fn nonexistent_integer_values_return_none(label in ident()) {
-            let data_file: DataFile<i32> = DataFile { values: [].into() };
+            let data_file: DataFile<i32> = DataFile { values: [].into(), ..Default::default() };
 
             assert_eq!(None, data_file.get::<i32>(&label));
         }
