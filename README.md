@@ -5,7 +5,7 @@ The documentation can be found on https://docs.rs/dzn-rs.
 
 The goal of the library is to be able to parse _all_ DZN files correctly. 
 Before that there will not be a 1.0 release.
-However, before that, the library may be useful for many DZN files nonetheless.
+However, the library may be useful for many DZN files without being able to parse every DZN file.
 
 ## Installation
 
