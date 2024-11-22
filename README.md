@@ -7,6 +7,22 @@ The goal of the library is to be able to parse _all_ DZN files correctly.
 Before that there will not be a 1.0 release.
 However, the library may be useful for many DZN files without being able to parse every DZN file.
 
+## To-Do
+
+- [-] Primitive Values
+  - [x] Boolean
+  - [x] Integer
+  - [ ] Float
+- [ ] Sets
+  - [ ] Boolean
+  - [ ] Integer
+  - [ ] Float
+- [-] Arrays (1d, 2d)
+  - [x] Boolean
+  - [x] Integer
+  - [ ] Float
+  - [ ] Set
+
 ## Installation
 
 To add this library as a dependecy to your project, run
