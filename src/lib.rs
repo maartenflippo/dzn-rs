@@ -24,8 +24,17 @@
 //!     assert_eq!(Some(value), array_1d.get([idx]));
 //! }
 //!
-//! let array_2d = data_file.array_2d::<bool>("array_2d", [3, 2]).expect("key exists with requested shape");
+//! let array_2d = data_file.array_2d::<bool>("array_2d", [3, 2])
+//!     .expect("key exists with requested shape");
 //! assert_eq!(&[3, 2], array_2d.shape());
+//!
+//! dbg!(&array_2d);
+//! assert_eq!(Some(&true), array_2d.get([0, 0]));
+//! assert_eq!(Some(&false), array_2d.get([0, 1]));
+//! assert_eq!(Some(&false), array_2d.get([1, 0]));
+//! assert_eq!(Some(&true), array_2d.get([1, 1]));
+//! assert_eq!(Some(&false), array_2d.get([2, 0]));
+//! assert_eq!(Some(&false), array_2d.get([2, 1]));
 //! ```
 
 mod ast;

@@ -75,24 +75,12 @@ impl<T, const D: usize> ShapedArray<T, D> {
     ///
     /// The path is an iterator of indices into each of the dimensions of the array.
     pub fn get(&self, path: [usize; D]) -> Option<&T> {
-        let mut strides = vec![1]; // Start with the last dimension having stride 1
-        let mut total_stride = 1;
+        let index = match D {
+            1 => path[0],
+            2 => path[0] * self.shape[1] + path[1],
+            _ => panic!("Arrays with higher than 2 dimensions are not supported"),
+        };
 
-        // Compute strides in reverse order (cumulative product of shape lengths)
-        for &dim_size in self.shape.iter().rev().skip(1) {
-            total_stride *= dim_size;
-            strides.push(total_stride);
-        }
-
-        strides.reverse();
-
-        // Compute the flattened index by multiplying each index by its corresponding stride
-        let flattened_index: usize = path
-            .iter()
-            .zip(strides.iter())
-            .map(|(i, stride)| i * stride)
-            .sum();
-
-        self.elements.get(flattened_index)
+        self.elements.get(index)
     }
 }
