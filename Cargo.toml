@@ -4,7 +4,6 @@ description = "A library for dealing with DZN files used in the MiniZinc languag
 version = "0.1.0"
 edition = "2021"
 authors = ["Maarten Flippo"]
-readme = "README.md"
 license = "MIT"
 
 [dependencies]
