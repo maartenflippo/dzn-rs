@@ -9,7 +9,7 @@ However, the library may be useful for many DZN files without being able to pars
 
 ## To-Do
 
-- [-] Primitive Values
+- [ ] Primitive Values
   - [x] Boolean
   - [x] Integer
   - [ ] Float
@@ -17,7 +17,7 @@ However, the library may be useful for many DZN files without being able to pars
   - [ ] Boolean
   - [ ] Integer
   - [ ] Float
-- [-] Arrays (1d, 2d)
+- [ ] Arrays (1d, 2d)
   - [x] Boolean
   - [x] Integer
   - [ ] Float
