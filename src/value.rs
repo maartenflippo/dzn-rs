@@ -1,12 +1,15 @@
 use crate::numbers::Integer;
 
+/// A primitive MiniZinc value.
 #[derive(Clone, Debug)]
 pub enum Value<Int> {
     Bool(bool),
     Int(Int),
 }
 
+/// Helper trait to extract values from enums.
 pub trait GetValue<T> {
+    /// If the enum is `T`, then return the value. Otherwise, return `None`.
     fn try_get(&self) -> Option<&T>;
 }
 
@@ -28,6 +31,9 @@ impl<Int: Integer> GetValue<Int> for Value<Int> {
     }
 }
 
+/// The possible arrays of values.
+///
+/// `DIM` is either 1 or 2, depending on whether we have a 1 dimensional or 2-dimensional array.
 #[derive(Clone, Debug)]
 pub enum ValueArray<Int, const DIM: usize> {
     Bool(ShapedArray<bool, DIM>),
@@ -52,6 +58,7 @@ impl<Int, const DIM: usize> GetValue<ShapedArray<Int, DIM>> for ValueArray<Int, 
     }
 }
 
+/// 1d or 2d array of values.
 #[derive(Clone, Debug)]
 pub struct ShapedArray<T, const DIM: usize> {
     pub(crate) shape: [usize; DIM],
@@ -59,6 +66,7 @@ pub struct ShapedArray<T, const DIM: usize> {
 }
 
 impl<T, const D: usize> ShapedArray<T, D> {
+    /// Get the shape of the multi-dimensional array.
     pub fn shape(&self) -> &[usize; D] {
         &self.shape
     }

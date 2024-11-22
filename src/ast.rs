@@ -1,4 +1,4 @@
-use std::{collections::HashMap, marker::PhantomData};
+use std::collections::HashMap;
 
 use crate::{
     numbers::Integer,
@@ -60,11 +60,6 @@ impl<Int: Integer> DataFile<Int> {
             .and_then(|array| array.try_get())
             .filter(move |&array| array.shape == shape)
     }
-}
-
-pub struct Array<'a, T> {
-    a: PhantomData<&'a ()>,
-    b: PhantomData<T>,
 }
 
 #[cfg(test)]

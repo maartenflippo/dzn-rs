@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use thiserror::Error;
 
+/// Errors the parser can encounter.
 #[derive(Debug, Error)]
 pub enum DznParseError {
     #[error("failed to read from source: {0}")]
@@ -15,11 +16,16 @@ pub enum DznParseError {
     },
 }
 
+/// Components of a parameter definition.
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum SyntaxElement {
+    /// The name of the parameter.
     Identifier,
+    /// The value or array to bind to the parameter.
     Value,
+    /// The equality between identifier and value.
     Equals,
+    /// The semicolon terminating the definition.
     SemiColon,
 }
 

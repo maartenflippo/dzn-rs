@@ -37,3 +37,4 @@ mod value;
 pub use ast::*;
 pub use error::*;
 pub use parser::*;
+pub use value::*;
