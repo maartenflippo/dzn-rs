@@ -203,7 +203,7 @@ where
 fn bool_parser(input: &mut &str) -> PResult<bool> {
     trace(
         "bool_value",
-        alt(("true".map(|_| true), "false".map(|_| false))),
+        delimited(ws, alt(("true".map(|_| true), "false".map(|_| false))), ws),
     )
     .parse_next(input)
 }
@@ -213,9 +213,20 @@ where
     Int: FromStr,
     Int::Err: Debug,
 {
-    trace("int_value", take_while(1.., |c: char| c.is_numeric()))
-        .parse_next(input)
-        .map(|s| Int::from_str(s).expect("The given integer type accepts valid integer inputs"))
+    trace(
+        "int_value",
+        delimited(ws, take_while(1.., |c: char| c.is_numeric()), ws),
+    )
+    .parse_next(input)
+    .map(|s| Int::from_str(s).expect("The given integer type accepts valid integer inputs"))
+}
+
+fn ws<'i>(input: &mut &'i str) -> PResult<&'i str> {
+    const WS: &[char] = &[' ', '\t', '\r', '\n'];
+
+    // Combinators like `take_while` return a function. That function is the
+    // parser,to which we can pass the input
+    take_while(0.., WS).parse_next(input)
 }
 
 fn identifier(input: &mut &str) -> PResult<String> {
@@ -257,5 +268,23 @@ mod tests {
 
         let data_file = parse::<i32>(source.as_bytes()).expect("valid dzn");
         assert_eq!(Some(6), data_file.get::<i32>("x2").copied());
+    }
+
+    #[test]
+    fn test_whitespace_around_array_is_handled() {
+        let source = r#"
+        x1 = [ 1, 22, 3 ];
+        "#;
+
+        let data_file = parse::<i32>(source.as_bytes()).expect("valid dzn");
+        let array = data_file
+            .array_1d::<i32>("x1", 3)
+            .expect("array with key exists");
+
+        assert_eq!([3], *array.shape());
+
+        for (idx, value) in [1, 22, 3].into_iter().enumerate() {
+            assert_eq!(value, array.get([idx]).copied().unwrap());
+        }
     }
 }
