@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::numbers::Integer;
 
 /// A primitive MiniZinc value.
@@ -5,6 +7,7 @@ use crate::numbers::Integer;
 pub enum Value<Int> {
     Bool(bool),
     Int(Int),
+    SetOfInt(HashSet<Int>),
 }
 
 /// Helper trait to extract values from enums.
@@ -31,6 +34,15 @@ impl<Int: Integer> GetValue<Int> for Value<Int> {
     }
 }
 
+impl<Int: Integer> GetValue<HashSet<Int>> for Value<Int> {
+    fn try_get(&self) -> Option<&HashSet<Int>> {
+        match self {
+            Value::SetOfInt(set) => Some(set),
+            _ => None,
+        }
+    }
+}
+
 /// The possible arrays of values.
 ///
 /// `DIM` is either 1 or 2, depending on whether we have a 1 dimensional or 2-dimensional array.
@@ -38,6 +50,7 @@ impl<Int: Integer> GetValue<Int> for Value<Int> {
 pub enum ValueArray<Int, const DIM: usize> {
     Bool(ShapedArray<bool, DIM>),
     Int(ShapedArray<Int, DIM>),
+    SetOfInt(ShapedArray<HashSet<Int>, DIM>),
 }
 
 impl<Int: Integer, const DIM: usize> GetValue<ShapedArray<bool, DIM>> for ValueArray<Int, DIM> {
@@ -53,6 +66,15 @@ impl<Int, const DIM: usize> GetValue<ShapedArray<Int, DIM>> for ValueArray<Int, 
     fn try_get(&self) -> Option<&ShapedArray<Int, DIM>> {
         match self {
             ValueArray::Int(array) => Some(array),
+            _ => None,
+        }
+    }
+}
+
+impl<Int, const DIM: usize> GetValue<ShapedArray<HashSet<Int>, DIM>> for ValueArray<Int, DIM> {
+    fn try_get(&self) -> Option<&ShapedArray<HashSet<Int>, DIM>> {
+        match self {
+            ValueArray::SetOfInt(set) => Some(set),
             _ => None,
         }
     }

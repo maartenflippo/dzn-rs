@@ -1,4 +1,4 @@
-use std::{fmt::Debug, io::BufRead, str::FromStr};
+use std::{collections::HashSet, fmt::Debug, hash::Hash, io::BufRead, str::FromStr};
 
 use winnow::{
     ascii::multispace0,
@@ -16,7 +16,7 @@ use crate::{
 /// Parse the data file from the given source.
 pub fn parse<Int>(mut source: impl BufRead) -> Result<DataFile<Int>, DznParseError>
 where
-    Int: FromStr + Debug,
+    Int: FromStr + Debug + Hash + Eq,
     Int::Err: Debug,
 {
     let mut buffer = String::new();
@@ -80,7 +80,7 @@ enum ValueOrArray<Int> {
 
 fn value_or_array<Int>(input: &mut &str) -> PResult<ValueOrArray<Int>>
 where
-    Int: FromStr + Debug,
+    Int: FromStr + Debug + Hash + Eq,
     Int::Err: Debug,
 {
     trace(
@@ -149,13 +149,15 @@ where
 
 fn array_1d<Int>(input: &mut &str) -> PResult<ValueArray<Int, 1>>
 where
-    Int: FromStr,
+    Int: FromStr + Hash + Eq,
     Int::Err: Debug,
 {
     let bool_value_array = value_array_1d("bool", bool_parser).map(ValueArray::Bool);
     let int_value_array = value_array_1d("int", int_parser).map(ValueArray::Int);
+    let set_int_value_array =
+        value_array_1d("set of int", value_set("int", int_parser::<Int>)).map(ValueArray::SetOfInt);
 
-    let array = alt((bool_value_array, int_value_array)).parse_next(input)?;
+    let array = alt((bool_value_array, int_value_array, set_int_value_array)).parse_next(input)?;
 
     Ok(array)
 }
@@ -177,6 +179,25 @@ where
     })
 }
 
+fn value_set<'src, Output, Error>(
+    value_name: &str,
+    value_parser: impl Parser<&'src str, Output, Error>,
+) -> impl Parser<&'src str, HashSet<Output>, Error>
+where
+    Error: ParserError<&'src str>,
+    Output: Hash + Eq,
+{
+    trace(
+        format!("set_{value_name}"),
+        delimited(
+            (multispace0, "{"),
+            value_list(value_parser),
+            ("}", multispace0),
+        ),
+    )
+    .map(|elements| elements.into_iter().collect())
+}
+
 fn value_list<'src, Output, Error>(
     value_parser: impl Parser<&'src str, Output, Error>,
 ) -> impl Parser<&'src str, Vec<Output>, Error>
@@ -190,12 +211,16 @@ where
 
 fn value<Int>(input: &mut &str) -> PResult<Value<Int>>
 where
-    Int: FromStr,
+    Int: FromStr + Hash + Eq,
     Int::Err: Debug,
 {
     trace(
         "value",
-        alt((bool_parser.map(Value::Bool), int_parser.map(Value::Int))),
+        alt((
+            bool_parser.map(Value::Bool),
+            int_parser.map(Value::Int),
+            value_set("int", int_parser).map(Value::SetOfInt),
+        )),
     )
     .parse_next(input)
 }
@@ -203,7 +228,11 @@ where
 fn bool_parser(input: &mut &str) -> PResult<bool> {
     trace(
         "bool_value",
-        delimited(ws, alt(("true".map(|_| true), "false".map(|_| false))), ws),
+        delimited(
+            multispace0,
+            alt(("true".map(|_| true), "false".map(|_| false))),
+            multispace0,
+        ),
     )
     .parse_next(input)
 }
@@ -215,18 +244,14 @@ where
 {
     trace(
         "int_value",
-        delimited(ws, take_while(1.., |c: char| c.is_numeric()), ws),
+        delimited(
+            multispace0,
+            take_while(1.., |c: char| c.is_numeric()),
+            multispace0,
+        ),
     )
     .parse_next(input)
     .map(|s| Int::from_str(s).expect("The given integer type accepts valid integer inputs"))
-}
-
-fn ws<'i>(input: &mut &'i str) -> PResult<&'i str> {
-    const WS: &[char] = &[' ', '\t', '\r', '\n'];
-
-    // Combinators like `take_while` return a function. That function is the
-    // parser,to which we can pass the input
-    take_while(0.., WS).parse_next(input)
 }
 
 fn identifier(input: &mut &str) -> PResult<String> {
@@ -240,6 +265,8 @@ fn identifier(input: &mut &str) -> PResult<String> {
 
 #[cfg(test)]
 mod tests {
+    use std::{collections::HashSet, hash::Hash};
+
     use proptest::{proptest, strategy::Strategy};
 
     use super::*;
@@ -286,5 +313,34 @@ mod tests {
         for (idx, value) in [1, 22, 3].into_iter().enumerate() {
             assert_eq!(value, array.get([idx]).copied().unwrap());
         }
+    }
+
+    #[test]
+    fn test_set_of_int_parsed() {
+        let source = r#"
+        set = {1, 2, 3};
+        set2 = { 5, 6 };
+        set3 = [ {1}, { 5, 6 } ];
+        "#;
+
+        let data_file = parse::<i32>(source.as_bytes()).expect("valid dzn");
+
+        let set = data_file.get::<HashSet<i32>>("set").expect("key exists");
+        let set2 = data_file.get::<HashSet<i32>>("set2").expect("key exists");
+
+        assert_eq!(&make_set([1, 2, 3]), set);
+        assert_eq!(&make_set([5, 6]), set2);
+
+        let set3 = data_file
+            .array_1d::<HashSet<i32>>("set3", 2)
+            .expect("array with key exists");
+
+        for (idx, value) in [make_set([1]), make_set([5, 6])].into_iter().enumerate() {
+            assert_eq!(&value, set3.get([idx]).unwrap());
+        }
+    }
+
+    fn make_set<T: Hash + Eq>(data: impl IntoIterator<Item = T>) -> HashSet<T> {
+        data.into_iter().collect()
     }
 }

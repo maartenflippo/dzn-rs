@@ -15,7 +15,7 @@ However, the library may be useful for many DZN files without being able to pars
   - [ ] Float
 - [ ] Sets
   - [ ] Boolean
-  - [ ] Integer
+  - [x] Integer
   - [ ] Float
 - [ ] Arrays (1d, 2d)
   - [x] Boolean
