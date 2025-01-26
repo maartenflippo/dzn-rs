@@ -51,6 +51,8 @@ where
                     actual: rest.to_string(),
                 })?;
 
+        dbg!(&value);
+
         let _ = delimited(multispace0, ";", multispace0)
             .parse_next(&mut rest)
             .map_err(|_: ErrMode<ContextError>| DznParseError::InvalidSyntax {
@@ -72,6 +74,7 @@ where
     })
 }
 
+#[derive(Clone, Debug)]
 enum ValueOrArray<Int> {
     Value(Value<Int>),
     Array1d(ValueArray<Int, 1>),
@@ -190,9 +193,9 @@ where
     trace(
         format!("set_{value_name}"),
         delimited(
-            (multispace0, "{"),
+            (multispace0, "{", multispace0),
             value_list(value_parser),
-            ("}", multispace0),
+            (multispace0, "}", multispace0),
         ),
     )
     .map(|elements| elements.into_iter().collect())
@@ -337,6 +340,24 @@ mod tests {
 
         for (idx, value) in [make_set([1]), make_set([5, 6])].into_iter().enumerate() {
             assert_eq!(&value, set3.get([idx]).unwrap());
+        }
+    }
+
+    #[test]
+    fn test_empty_set() {
+        let source = r#"
+        x1 = [ {}, { }, {  } ];
+        "#;
+
+        let data_file = parse::<i32>(source.as_bytes()).expect("valid dzn");
+        let array = data_file
+            .array_1d::<HashSet<i32>>("x1", 3)
+            .expect("array with key exists");
+
+        assert_eq!([3], *array.shape());
+
+        for idx in 0..3 {
+            assert!(array.get([idx]).unwrap().is_empty());
         }
     }
 
